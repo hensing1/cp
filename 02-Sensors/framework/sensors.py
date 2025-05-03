@@ -100,7 +100,7 @@ def generate_difference_images(perp: np.ndarray, parallel: np.ndarray) -> np.nda
     for i in range(100):
         noisy_perp = add_poisson_noise(perp)
         noisy_para = add_poisson_noise(parallel)
-        difference_images[:, :, i] = noisy_perp - noisy_para
+        difference_images[:, :, i] = noisy_para - noisy_perp
     return difference_images
 
 
@@ -112,29 +112,44 @@ def ex2_2_skellam_separation():
 
     # Start plot
     fig, axs = plt.subplots(2, 2, figsize=(12, 8))
+    for a in axs.flat:
+        a.axis('off')
     axs[0, 0].imshow(parallel.clip(0,1), cmap="gray", vmin=0, vmax=1)
     axs[0, 0].set_title("Parallel")
-    axs[0, 0].axis('off')
     axs[1, 0].imshow(perp.clip(0,1), cmap="gray", vmin=0, vmax=1)
     axs[1, 0].set_title("Perpendicular")
-    axs[1, 0].axis('off')
 
     # Simulate 100 difference images
     difference_images = generate_difference_images(perp, parallel)
 
     # Calculate mean and variance for each pixel
     mean = np.mean(difference_images, axis=2)
-    variance = np.sum(np.square(difference_images - mean[:, :, np.newaxis]), axis=2) / 99
+    variance = np.var(difference_images, axis=2) * 255 # need to scale variance back up since we
+                                                       # scaled the poisson distribution down
+                                                       # (mean / 255 -> variance / 255^2)
 
     # Reconstruct perpendicular and parallel illumination
     # Plot as axs[0, 1] and axs[1, 1]
+    # Formula:
+    # | mu_diff  | = |  nu   -nu  | * | mu_1 |
+    # | var_diff |   | nu^2  nu^2 |   | mu_2 |
+    nu = 1.1
+    mat = np.linalg.inv([
+        [nu, -nu],
+        [nu * nu, nu * nu]
+    ])
+    para_rec = mat[0, 0] * mean + mat[0, 1] * variance
+    perp_rec = mat[1, 0] * mean + mat[1, 1] * variance
+    axs[0, 1].imshow(para_rec, cmap="gray")
+    axs[0, 1].set_title("Parallel (reconstruction)")
+    axs[1, 1].imshow(perp_rec, cmap="gray")
+    axs[1, 1].set_title("Perpendicular (reconstruction)")
 
     plt.tight_layout()
-    plt.show()
     os.makedirs(Path(__file__).parent / "out", exist_ok=True)
     fig.savefig(Path(__file__).parent / "out" / "ex2_2.png")
 
 
 if __name__ == '__main__':
-    # ex2_1_noisy_images()
+    ex2_1_noisy_images()
     ex2_2_skellam_separation()
