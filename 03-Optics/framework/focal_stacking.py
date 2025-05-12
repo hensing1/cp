@@ -12,14 +12,14 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 
-def load_image_stack(dir_path: Path) -> np.array:
+def load_image_stack(dir_path: Path) -> np.ndarray:
     """Load all .jpg images inside dir as a numpy array
 
     Args:
         dir_path (Path): Path to directory containing .jpg files
 
     Returns:
-        np.array: DxHxWx3 array, dtype float32, values in range [0,1]
+        np.ndarray: DxHxWx3 array, dtype float32, values in range [0,1]
     """
 
     image_stack = np.array(
@@ -35,29 +35,29 @@ def load_image_stack(dir_path: Path) -> np.array:
     return image_stack
 
 
-def stack_to_depth(image_stack: np.array) -> np.array:
+def stack_to_depth(image_stack: np.ndarray) -> np.ndarray:
     """Compute depth map from contrast matrix
 
     Args:
-        image_stack (np.array): DxHxWx3 array
+        image_stack (np.ndarray): DxHxWx3 array
 
     Returns:
-        np.array: HxW array, dtype int64, values in range {0,...,22}
+        np.ndarray: HxW array, dtype int64, values in range {0,...,22}
     """
     laplacian = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]]) / 8
     contrast = scipy.ndimage.convolve(image_stack, laplacian, axes=(1, 2))
     return np.argmax(np.sum(np.abs(contrast), axis=3), axis=0)
 
 
-def combine_stack(image_stack: np.array, depth: np.array) -> np.array:
+def combine_stack(image_stack: np.ndarray, depth: np.ndarray) -> np.ndarray:
     """Combine image stack and depth to a single image
 
     Args:
-        image_stack (np.array): DxHxWx3 array
-        depth (np.array): HxW array
+        image_stack (np.ndarray): DxHxWx3 array
+        depth (np.ndarray): HxW array
 
     Returns:
-        np.array: HxWx3 array, dtype float32, values in range [0,1]
+        np.ndarray: HxWx3 array, dtype float32, values in range [0,1]
     """
     rows, cols = depth.shape
     x_indices, y_indices = np.meshgrid(np.arange(cols), np.arange(rows))
@@ -68,12 +68,18 @@ def denoise_depth(depth):
     """Apply denoising to depth map using e.g. a median filter
 
     Args:
-        depth (np.array): HxW array
+        depth (np.ndarray): HxW array
 
     Returns:
-        np.array: HxW array, dtype int64, values in range {0,...,22}
+        np.ndarray: HxW array, dtype int64, values in range {0,...,22}
     """
     return scipy.signal.medfilt2d(depth, kernel_size=5)
+
+
+def why_is_dataset_not_optimal():
+    return """
+    
+    """
 
 
 def ex1_focal_stacking():
